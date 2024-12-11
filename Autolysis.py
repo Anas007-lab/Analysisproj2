@@ -4,11 +4,13 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import requests
 import json
+import numpy as np  # Importing numpy
+from tabulate import tabulate  # Importing tabulate for table formatting
+from scipy import stats  # Importing scipy for any advanced statistical functions
+from datetime import datetime  # Importing datetime to generate unique filenames
 
-# Prompt the user for their API token and the folder location
-api_proxy_token = input("Please enter your API proxy token: ")
-folder_path = input("Please enter the folder path where the CSV files are located: ")
-
+# Use your token directly
+api_proxy_token = "eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6IjIzZHMzMDAwMDY3QGRzLnN0dWR5LmlpdG0uYWMuaW4ifQ.gxqDjvmlsp4p0fMuki1kqIYSL-NNZ7u0wApf15ksDyo"
 api_proxy_base_url = "https://aiproxy.sanand.workers.dev/openai/v1"
 
 def read_csv(filename):
@@ -55,7 +57,7 @@ def visualize_data(df, output_prefix):
         plt.xticks(fontsize=12, rotation=45, ha="right")  # Rotate and align x-axis labels
         plt.yticks(fontsize=12)
         plt.tight_layout(pad=3.0)  # Adjust layout
-        heatmap_file = f"{output_prefix}_heatmap.png"
+        heatmap_file = generate_unique_filename(f"{output_prefix}_heatmap.png")
         plt.savefig(heatmap_file, dpi=300)  # Save high-resolution image
         charts.append(heatmap_file)
         plt.close()
@@ -72,7 +74,7 @@ def visualize_data(df, output_prefix):
         plt.xticks(fontsize=12)
         plt.yticks(fontsize=12)
         plt.tight_layout(pad=3.0)  # Adjust layout
-        barplot_file = f"{output_prefix}_barplot.png"
+        barplot_file = generate_unique_filename(f"{output_prefix}_barplot.png")
         plt.savefig(barplot_file, dpi=300)
         charts.append(barplot_file)
         plt.close()
@@ -117,7 +119,25 @@ def save_markdown(story, charts, output_file):
         for chart in charts:
             f.write(f"![Chart](./{chart})\n")
 
+def save_table(df, output_file):
+    """Save the dataframe as a formatted table in the README.md file."""
+    table = tabulate(df.head(), headers='keys', tablefmt='pipe', showindex=False)
+    with open(output_file, "a") as f:
+        f.write("\n## Sample Data\n\n")
+        f.write(table + "\n")
+
+def generate_unique_filename(filename):
+    """Generate a unique filename by appending a timestamp."""
+    if os.path.exists(filename):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename, extension = os.path.splitext(filename)
+        filename = f"{filename}_{timestamp}{extension}"
+    return filename
+
 def main():
+    # Define the folder path
+    folder_path = r"C:\Users\91735\OneDrive\Desktop\Automatedanalysis"
+
     # Change to the specified folder
     try:
         os.chdir(folder_path)
@@ -149,9 +169,13 @@ def main():
         story = narrate_story(analysis, charts, filename)
         
         # Save README.md
-        readme_file = f"README_{output_prefix}.md"
+        readme_file = generate_unique_filename(f"README_{output_prefix}.md")
         save_markdown(story, charts, readme_file)
+        
+        # Save Sample Data Table
+        save_table(df, readme_file)
+
         print(f"Analysis completed for {filename}. Check {readme_file} and charts.")
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     main()
